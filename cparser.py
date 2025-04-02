@@ -6,8 +6,11 @@ lines from the source file into lexemes.
 """
 
 from collections import namedtuple
-from pathlib import Path
 from enum import Enum, auto
+from itertools import groupby
+from pathlib import Path
+
+from utils import format_ranges
 
 class LexemeType(Enum):
     """Enumeration for lexeme types in the parser."""
@@ -24,9 +27,18 @@ class Lexeme: #pylint: disable=too-few-public-methods
         self.text = ''
         self.locs = []
 
+    def _format_locs(self):
+        def format_lines():
+            for l, locs in groupby(self.locs, key=lambda pos: pos.l):
+                ranges = format_ranges(pos.c for pos in locs)
+                yield f"{l}:{ranges}"
+
+        return ';'.join(format_lines())
+
     def dump(self):
         """Returns a string representation of the lexeme."""
-        return f'Lexeme(type={self.type.name}, text={self.text}, locs={self.locs})'
+        locs = self._format_locs()
+        return f'Lexeme(type={self.type.name}, text={self.text}, locs={locs})'
 
 def make_line(num, line):
     """
